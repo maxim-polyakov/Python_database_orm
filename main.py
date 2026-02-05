@@ -39,7 +39,7 @@ def main():
             input("Нажмите Enter для выхода...")
             return
 
-        # Проверяем подключение к базе
+        # Проверяем подключение к базе и инициализируем таблицы
         print("🔍 Проверка подключения к базе данных...")
         handler = PostgreSQLHandler()
         if not handler.check_connection():
@@ -49,6 +49,9 @@ def main():
             if choice != 'y':
                 print("Выход из программы...")
                 return
+
+        from database.database_handler import setup_database
+        setup_database()
 
         # Импортируем окно приложения
         from ui.main_window import MainWindow

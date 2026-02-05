@@ -281,23 +281,18 @@ def setup_database():
         return False
 
     try:
-        import sys
-        from django.core.management import execute_from_command_line
+        from django.core.management import call_command
 
-        print("🔄 Настройка базы данных PostgreSQL...")
+        print("🔄 Инициализация таблиц в базе данных...")
 
         try:
-            # Пробуем создать миграции
-            print("Создание миграций...")
-            execute_from_command_line([sys.argv[0], 'makemigrations', 'database'])
+            call_command('makemigrations', 'database', verbosity=1)
         except Exception as e:
             print(f"⚠️  Предупреждение при создании миграций: {e}")
 
         try:
-            # Применяем миграции
-            print("Применение миграций...")
-            execute_from_command_line([sys.argv[0], 'migrate'])
-            print("✅ База данных настроена успешно")
+            call_command('migrate', verbosity=1)
+            print("✅ Таблицы в базе данных созданы/обновлены")
             return True
         except Exception as e:
             print(f"❌ Ошибка при применении миграций: {e}")
