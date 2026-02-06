@@ -27,7 +27,7 @@ def main():
         # Проверяем настройки Django
         try:
             import django
-            from database.database_handler import PostgreSQLHandler
+            from database.PostgreSQLHandler import PostgreSQLHandler
         except ImportError as e:
             print(f"❌ Ошибка импорта: {e}")
             print("Установите необходимые зависимости:")
@@ -50,15 +50,10 @@ def main():
                 print("Выход из программы...")
                 return
 
-        from database.database_handler import setup_database
-        from database.database_handler import create_test_data
+        from database.PostgreSQLHandler import setup_database
+        from database.PostgreSQLHandler import create_test_data
         setup_database()
-
-        # Настраиваем базу данных
-        if setup_database():
-            print("✅ База данных настроена")
-            # Создаем тестовые данные
-            create_test_data()
+        create_test_data()
 
         # Импортируем окно приложения
         from ui.main_window import MainWindow

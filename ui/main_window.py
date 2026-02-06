@@ -6,7 +6,7 @@ from tkinter import ttk, messagebox, scrolledtext, simpledialog
 from datetime import datetime
 import threading
 
-from database.database_handler import PostgreSQLHandler, setup_database, create_test_data
+from database.PostgreSQLHandler import PostgreSQLHandler, setup_database, create_test_data
 
 
 class MainWindow:

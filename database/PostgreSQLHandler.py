@@ -274,55 +274,42 @@ class PostgreSQLHandler:
             return {}
 
 
-# def _ensure_tables():
-#     """
-#     Создаёт таблицы по текущим моделям, если их ещё нет.
-#     Порядок: Customer, Product, Order, OrderItem (из-за внешних ключей).
-#     Не зависит от файлов миграций.
-#     """
-#     from django.db import connection
-#
-#     models_to_create = [Customer, Product, Order, OrderItem]
-#
-#     with connection.cursor() as cursor:
-#         existing_tables = set(connection.introspection.table_names(cursor))
-#
-#     with connection.schema_editor() as schema_editor:
-#         for model in models_to_create:
-#             table = model._meta.db_table
-#             if table in existing_tables:
-#                 continue
-#             schema_editor.create_model(model)
-#             existing_tables.add(table)
-#             print(f"  Создана таблица: {table}")
-
-
 def setup_database():
-    """Настройка базы данных (создание таблиц). Всегда создаёт недостающие таблицы."""
+    """Настройка базы данных: создание и применение миграций."""
     if not DJANGO_SETUP:
         print("❌ Django не настроен")
         return False
 
+    from django.core.management import call_command
+
     print("🔄 Инициализация таблиц в базе данных...")
 
-    # Пробуем миграции (могут не создать таблицы, если миграций нет или не применяются)
-    try:
-        from django.core.management import call_command
-        call_command('makemigrations', 'database', verbosity=0)
-        call_command('migrate', verbosity=0)
-    except Exception:
-        pass
+    # 0. Убедиться, что пакет database.migrations существует (Django иначе не видит миграции)
+    migrations_dir = Path(__file__).parent / 'migrations'
+    migrations_dir.mkdir(exist_ok=True)
+    (migrations_dir / '__init__.py').touch()
 
-    # Всегда проверяем и создаём недостающие таблицы по моделям
-    # try:
-    #     _ensure_tables()
-    #     print("✅ Таблицы в базе данных созданы/обновлены")
-    #     return True
-    # except Exception as e:
-    #     print(f"❌ Ошибка при создании таблиц: {e}")
-    #     import traceback
-    #     traceback.print_exc()
-    #     return False
+    # 1. Создать миграции для приложения database (создаёт файлы в database/migrations/)
+    try:
+        print("  Создание миграций...")
+        call_command('makemigrations', 'database', verbosity=2)
+    except Exception as e:
+        print(f"⚠️ Ошибка создания миграций: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+    # 2. Применить миграции к БД
+    try:
+        call_command('migrate', 'database', verbosity=2)
+    except Exception as e:
+        print(f"❌ Ошибка применения миграций: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+    print("✅ Таблицы в базе данных созданы/обновлены")
+    return True
 
 
 def create_test_data():
@@ -363,26 +350,3 @@ def create_test_data():
         print(f"❌ Ошибка создания тестовых данных: {e}")
         return False
 
-
-if __name__ == "__main__":
-    # Тестирование подключения
-    print("🔍 Тестирование подключения к PostgreSQL...")
-
-    if not DJANGO_SETUP:
-        print("❌ Не удалось настроить Django")
-        sys.exit(1)
-
-    handler = PostgreSQLHandler()
-
-    if handler.check_connection():
-        print("✅ Подключение успешно!")
-
-        # Настраиваем базу данных
-        if setup_database():
-            print("✅ База данных настроена")
-
-            # Создаем тестовые данные
-            create_test_data()
-    else:
-        print("❌ Не удалось подключиться к базе данных")
-        print("Проверьте настройки в файле .env")
